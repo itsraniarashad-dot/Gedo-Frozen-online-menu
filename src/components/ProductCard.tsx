@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Product } from '../types';
 import { useStore, getCartItemKey } from '../context/StoreContext';
-import { Plus, Minus, Flame, Timer, Snowflake, Scale } from 'lucide-react';
+import { Plus, Minus, Snowflake, Scale } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -87,22 +87,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
         
         <div>
-          {/* Cooking instruction tag if available */}
-          {product.cookingMethod && (
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200/60">
-                <Flame className="w-3 h-3 text-orange-500" />
-                {product.cookingMethod}
-              </span>
-              {product.cookingTime && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-stone-500">
-                  <Timer className="w-3 h-3 text-stone-400" />
-                  {product.cookingTime}
-                </span>
-              )}
-            </div>
-          )}
-
           {/* Product Title */}
           <h3 
             onClick={() => openProductModal(product)}

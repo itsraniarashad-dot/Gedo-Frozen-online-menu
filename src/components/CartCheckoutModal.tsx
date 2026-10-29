@@ -98,7 +98,7 @@ export const CartCheckoutModal: React.FC = () => {
       }
     }
 
-    if (subtotal < settings.minOrderAmount) {
+    if (settings.minOrderAmount > 0 && subtotal < settings.minOrderAmount) {
       setErrorMessage(`الحد الأدنى للطلب هو ${settings.minOrderAmount} ج.م`);
       return;
     }

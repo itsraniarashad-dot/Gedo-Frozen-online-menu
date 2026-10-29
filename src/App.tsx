@@ -112,8 +112,10 @@ const MenuContent: React.FC = () => {
 
               <div className="space-y-2 text-xs text-stone-600">
                 <div className="flex items-center justify-between">
-                  <span>الحد الأدنى للطلب:</span>
-                  <span className="font-bold text-stone-900">{settings.minOrderAmount} ج.م</span>
+                  <span>الحد الأدنى:</span>
+                  <span className="font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-lg">
+                    بدون حد أدنى للطلب ✓
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>رسوم التوصيل:</span>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { X, Plus, Minus, Snowflake, Flame, Timer, ShieldCheck, ShoppingBag, Scale } from 'lucide-react';
+import { X, Plus, Minus, Snowflake, ShieldCheck, ShoppingBag, Scale } from 'lucide-react';
 
 export const ProductDetailModal: React.FC = () => {
   const { selectedProductForModal, closeProductModal, addToCart } = useStore();
@@ -153,35 +153,6 @@ export const ProductDetailModal: React.FC = () => {
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {/* Cooking Instructions Card */}
-          {product.cookingMethod && (
-            <div className="bg-orange-50/70 border border-orange-200/80 rounded-2xl p-3.5 space-y-2">
-              <h4 className="text-xs font-black text-orange-900 flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-orange-600" />
-                <span>إرشادات التحضير والتسوية:</span>
-              </h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-white p-2.5 rounded-xl border border-orange-100">
-                  <span className="text-stone-400 block text-[10px]">طريقة الاستخدام</span>
-                  <span className="font-bold text-stone-800">
-                    {product.cookingMethod}
-                  </span>
-                </div>
-                <div className="bg-white p-2.5 rounded-xl border border-orange-100">
-                  <span className="text-stone-400 block text-[10px]">الوقت المقترح</span>
-                  <span className="font-bold text-stone-800 flex items-center gap-1">
-                    <Timer className="w-3.5 h-3.5 text-stone-500" />
-                    {product.cookingTime || 'حسب الرغبة'}
-                  </span>
-                </div>
-              </div>
-              <p className="text-[11px] text-orange-700 flex items-center gap-1 pt-1 font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-orange-600" />
-                <span>جودة مضمونة ومحفوظة بعناية للحصول على أشهى نتيجة.</span>
-              </p>
             </div>
           )}
 

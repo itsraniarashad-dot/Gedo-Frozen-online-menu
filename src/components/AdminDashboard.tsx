@@ -149,8 +149,8 @@ export const AdminDashboard: React.FC = () => {
   const handleSmartAutoCategorize = () => {
     const rules = [
       {
-        catId: 'baking',
-        catName: 'خامات ومستلزمات حلويات',
+        catId: 'dessert-supplies',
+        catName: 'مستلزمات الحلويات',
         keywords: ['كريم', 'شانتيه', 'كاكاو', 'شيكولاتة', 'شوكولاتة', 'فانيليا', 'بيكنج', 'خميرة', 'دقيق', 'سكر', 'باف باستري', 'ميلفيه', 'جيلي', 'تورتة', 'كنافة', 'بسبوسة', 'جلاش', 'عجينة', 'محسن', 'زبدة', 'كريمة', 'شيبس', 'بستري', 'لوتس', 'نوتيلا', 'فستق', 'مكسرات', 'كراميل', 'كريمة خفق', 'شوكولاته']
       },
       {
@@ -177,11 +177,6 @@ export const AdminDashboard: React.FC = () => {
         catId: 'veggies',
         catName: 'خضروات وفواكه مجمدة',
         keywords: ['بطاطس', 'ملوخية', 'بامية', 'بسلة', 'خضار', 'فراولة', 'مانجو', 'ذرة', 'سبانخ', 'قلقاس', 'جزر', 'فاصوليا', 'بصل', 'بروكلي', 'خرشوف', 'ورق عنب']
-      },
-      {
-        catId: 'bundles',
-        catName: 'عروض وباقات توفير',
-        keywords: ['عرض', 'باقة', 'بوكس', 'توفير', 'لمة', 'عائلي', 'كومبو']
       }
     ];
 
@@ -1151,7 +1146,7 @@ export const AdminDashboard: React.FC = () => {
 
                       <div>
                         <label className="block text-xs font-bold text-stone-700 mb-1">
-                          الحد الأدنى للطلب (ج.م)
+                          الحد الأدنى للطلب (ج.م) - ضع 0 لإلغاء الحد الأدنى
                         </label>
                         <input
                           type="number"
@@ -1592,27 +1587,15 @@ export const AdminDashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">طريقة الطهي</label>
-                  <input
-                    type="text"
-                    placeholder="قلاية هوائية أو زيت ساخن"
-                    value={productForm.cookingMethod}
-                    onChange={(e) => setProductForm({ ...productForm, cookingMethod: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs sm:text-sm outline-none focus:border-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">شارة مميزة (Badge)</label>
-                  <input
-                    type="text"
-                    placeholder="الأكثر مبيعاً 🔥 / جديد"
-                    value={productForm.badge}
-                    onChange={(e) => setProductForm({ ...productForm, badge: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs sm:text-sm outline-none focus:border-orange-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">شارة مميزة (Badge اختياري)</label>
+                <input
+                  type="text"
+                  placeholder="الأكثر مبيعاً 🔥 / جديد / مميز"
+                  value={productForm.badge}
+                  onChange={(e) => setProductForm({ ...productForm, badge: e.target.value })}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs sm:text-sm outline-none focus:border-orange-500"
+                />
               </div>
 
               {/* Image Section */}

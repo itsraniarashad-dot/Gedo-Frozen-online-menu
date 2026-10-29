@@ -65,12 +65,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const saved = localStorage.getItem('gedo_frozen_products');
       if (saved) {
         const parsed: Product[] = JSON.parse(saved);
+        const cleaned: Product[] = parsed.map((p: Product) => {
+          const copy = { ...p };
+          delete copy.cookingMethod;
+          delete copy.cookingTime;
+          // Reassign baking or "خامات حلويات وتزيين" to "dessert-supplies"
+          if (copy.category === 'baking' || copy.category === 'خامات حلويات وتزيين') {
+            copy.category = 'dessert-supplies';
+          }
+          // Reassign bundles or "عروض التوفير"
+          if (copy.category === 'bundles' || copy.category === 'عروض وباقات التوفير' || copy.category === 'عروض التوفير') {
+            copy.category = 'poultry';
+          }
+          return copy;
+        });
         // Merge missing default products (like bak-1, bak-2)
-        const missing = INITIAL_PRODUCTS.filter(ip => !parsed.some(p => p.id === ip.id));
+        const missing = INITIAL_PRODUCTS.filter(ip => !cleaned.some(p => p.id === ip.id));
         if (missing.length > 0) {
-          return [...parsed, ...missing];
+          return [...cleaned, ...missing];
         }
-        return parsed;
+        return cleaned;
       }
       return INITIAL_PRODUCTS;
     } catch {
@@ -78,17 +92,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
-  // Load categories (and ensure baking category exists)
+  // Load categories (permanently filter out bundles and old baking, ensuring dessert-supplies exists)
   const [categories, setCategories] = useState<Category[]>(() => {
     try {
       const saved = localStorage.getItem('gedo_frozen_categories');
       if (saved) {
         const parsed: Category[] = JSON.parse(saved);
-        const missing = INITIAL_CATEGORIES.filter(ic => !parsed.some(c => c.id === ic.id));
-        if (missing.length > 0) {
-          return [...parsed, ...missing];
+        // Exclude unwanted categories permanently
+        const filtered = parsed.filter(c => 
+          c.id !== 'bundles' && 
+          c.id !== 'baking' && 
+          c.name !== 'عروض وباقات التوفير' && 
+          c.name !== 'عروض التوفير' && 
+          c.name !== 'خامات حلويات وتزيين'
+        );
+        // Ensure "مستلزمات الحلويات" exists
+        if (!filtered.some(c => c.id === 'dessert-supplies' || c.name === 'مستلزمات الحلويات')) {
+          filtered.splice(1, 0, { id: 'dessert-supplies', name: 'مستلزمات الحلويات' });
         }
-        return parsed;
+        return filtered;
       }
       return INITIAL_CATEGORIES;
     } catch {
@@ -112,6 +134,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         if (!parsed.addressText || !parsed.addressText.includes('الفردوس') || parsed.addressText.includes('سيارات مجهزة')) {
           parsed.addressText = INITIAL_SETTINGS.addressText;
+        }
+        if (parsed.minOrderAmount === 100) {
+          parsed.minOrderAmount = 0;
         }
         delete parsed.freeDeliveryThreshold;
         return { ...INITIAL_SETTINGS, ...parsed };
