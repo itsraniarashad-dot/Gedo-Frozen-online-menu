@@ -1,0 +1,6 @@
+{
+  "name": "Gedo Frozen | جدو فروزن - ديجيتال منيو للمنتجات المجمدة",
+  "description": "منيو رقمي وسلة طلبات لمتجر Gedo Frozen للمنتجات المجمدة مع إرسال الطلبات للواتساب وطرق دفع كاش وإنستاباي ومحافظ إلكترونية ولوحة إدارة متكاملة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

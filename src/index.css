@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Custom scrollbar for horizontal categories */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fafaf9;
+}
+::-webkit-scrollbar-thumb {
+  background: #fdba74;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}
