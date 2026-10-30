@@ -62,11 +62,19 @@ export const AdminDashboard: React.FC = () => {
     resetToDefaults,
     isAdminLoggedIn,
     loginAdmin,
-    logoutAdmin
+    loginAdminWithSupabase,
+    logoutAdmin,
+    adminEmail,
+    isUsingSupabase
   } = useStore();
 
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authErrorMessage, setAuthErrorMessage] = useState('');
+  const [usePinFallback, setUsePinFallback] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'excel' | 'settings' | 'categories'>('products');
 
   // Category inline edit state
@@ -204,7 +212,24 @@ export const AdminDashboard: React.FC = () => {
     alert(`⚡ تم بنجاح تصنيف (${categorizedCount}) منتج وتوزيعهم على الأقسام المناسبة وفق أسمائهم!`);
   };
 
-  // Login handler
+  // Login handler with Supabase email & password + admin_users verification
+  const handleSupabaseLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setAuthErrorMessage('');
+
+    const res = await loginAdminWithSupabase(authEmail, authPassword);
+    setAuthLoading(false);
+
+    if (res.success) {
+      setAuthErrorMessage('');
+      setAuthPassword('');
+    } else {
+      setAuthErrorMessage(res.error || 'فشل تسجيل الدخول، يرجى التأكد من البريد وكلمة المرور.');
+    }
+  };
+
+  // PIN Login handler fallback
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (loginAdmin(pinInput)) {
@@ -430,16 +455,61 @@ export const AdminDashboard: React.FC = () => {
     XLSX.writeFile(workbook, 'قالب_منتجات_Gedo_Frozen.xlsx');
   };
 
+  // Full Store Backup (Products + Categories + Settings)
+  const handleDownloadFullBackup = () => {
+    const backupData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      products,
+      categories,
+      settings
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `نسخة_احتياطية_كاملة_Gedo_Frozen_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Restore Store Backup
+  const handleRestoreFullBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed.products && Array.isArray(parsed.products)) {
+          localStorage.setItem('gedo_frozen_products', JSON.stringify(parsed.products));
+        }
+        if (parsed.categories && Array.isArray(parsed.categories)) {
+          localStorage.setItem('gedo_frozen_categories', JSON.stringify(parsed.categories));
+        }
+        if (parsed.settings) {
+          localStorage.setItem('gedo_frozen_settings', JSON.stringify(parsed.settings));
+        }
+        alert('🎉 تم استعادة نسختك الاحتياطية بنجاح! سيتم تحديث الصفحة الآن لعرض كافة بياناتك.');
+        window.location.reload();
+      } catch (err) {
+        alert('عذراً، حدث خطأ أثناء قراءة ملف النسخة الاحتياطية. يرجى التأكد من اختيار الملف الصحيح.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // Export current catalog to Excel
   const handleExportCurrentToExcel = () => {
     const data = products.map(p => ({
       'اسم المنتج': p.name,
       'السعر': p.price,
       'السعر قبل الخصم': p.originalPrice || '',
-      'القسم': p.category,
+      'القسم': categories.find(c => c.id === p.category)?.name || p.category,
       'الوزن أو العبوة': p.weight || '',
       'الوصف': p.description || '',
-      'طريقة الطهي': p.cookingMethod || '',
       'شارة': p.badge || '',
       'متوفر': p.inStock ? 'نعم' : 'لا',
       'رابط الصورة': p.image
@@ -497,12 +567,19 @@ export const AdminDashboard: React.FC = () => {
           
           <div className="flex items-center gap-2">
             {isAdminLoggedIn && (
-              <button
-                onClick={logoutAdmin}
-                className="text-xs bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg transition"
-              >
-                تسجيل خروج
-              </button>
+              <div className="flex items-center gap-2">
+                {adminEmail && (
+                  <span className="text-[11px] text-stone-300 bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-700 hidden sm:inline-block" dir="ltr">
+                    {adminEmail}
+                  </span>
+                )}
+                <button
+                  onClick={logoutAdmin}
+                  className="text-xs bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                >
+                  تسجيل خروج
+                </button>
+              </div>
             )}
             <button
               onClick={closeAdminDashboard}
@@ -519,31 +596,106 @@ export const AdminDashboard: React.FC = () => {
             <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-3xl flex items-center justify-center mx-auto shadow-md">
               <Lock className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-black text-stone-900">تسجيل دخول صاحب المتجر</h3>
-            <p className="text-xs text-stone-500">
-              أدخل رمز المرور السري (الافتراضي هو: <strong className="text-orange-600 font-mono">1234</strong> ويمكنك تغييره من الإعدادات).
-            </p>
-            <form onSubmit={handleLogin} className="space-y-3">
-              <input
-                type="password"
-                placeholder="رمز المرور (PIN)"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                autoFocus
-                className="w-full text-center tracking-widest text-lg font-mono py-2.5 px-4 bg-stone-100 border border-stone-300 rounded-2xl focus:border-orange-500 focus:bg-white outline-none"
-              />
-              {pinError && (
-                <div className="text-xs text-red-600 font-bold">
-                  رمز المرور غير صحيح، حاول مرة أخرى.
+            
+            <div>
+              <h3 className="text-lg font-black text-stone-900">تسجيل دخول صاحب المتجر</h3>
+              <p className="text-xs text-stone-500 mt-1">
+                {usePinFallback 
+                  ? 'تسجيل الدخول برمز PIN الطوارئ' 
+                  : 'سجل دخولك بحساب الإدارة المسجل في Supabase'}
+              </p>
+            </div>
+
+            {!usePinFallback ? (
+              /* Supabase Email/Password Form */
+              <form onSubmit={handleSupabaseLogin} className="space-y-3 text-right">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">البريد الإلكتروني للإدارة</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="admin@gedofrozen.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    dir="ltr"
+                    className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
+                  />
                 </div>
-              )}
-              <button
-                type="submit"
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-2xl shadow-md transition"
-              >
-                دخول لوحة التحكم
-              </button>
-            </form>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">كلمة المرور</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    dir="ltr"
+                    className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
+                  />
+                </div>
+
+                {authErrorMessage && (
+                  <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-bold text-center">
+                    {authErrorMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {authLoading ? (
+                    <span>جاري التحقق من الصلاحيات...</span>
+                  ) : (
+                    <span>دخول لوحة التحكم</span>
+                  )}
+                </button>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setUsePinFallback(true)}
+                    className="text-[11px] text-stone-400 hover:text-orange-600 underline cursor-pointer"
+                  >
+                    أو الدخول برمز PIN السري
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* PIN Fallback Form */
+              <form onSubmit={handleLogin} className="space-y-3">
+                <input
+                  type="password"
+                  placeholder="رمز المرور (PIN)"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  autoFocus
+                  className="w-full text-center tracking-widest text-lg font-mono py-2.5 px-4 bg-stone-100 border border-stone-300 rounded-2xl focus:border-orange-500 focus:bg-white outline-none"
+                />
+                {pinError && (
+                  <div className="text-xs text-red-600 font-bold">
+                    رمز المرور غير صحيح، حاول مرة أخرى.
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-2xl shadow-md transition cursor-pointer"
+                >
+                  دخول لوحة التحكم
+                </button>
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setUsePinFallback(false)}
+                    className="text-[11px] text-stone-400 hover:text-orange-600 underline cursor-pointer"
+                  >
+                    العودة لتسجيل الدخول بالبريد وكلمة المرور
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         ) : (
           <>
@@ -618,13 +770,36 @@ export const AdminDashboard: React.FC = () => {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={handleDownloadFullBackup}
+                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-xs transition cursor-pointer"
+                        title="تحميل نسخة احتياطية كاملة من كل المنتجات والأقسام والأسعار"
+                      >
+                        <Download className="w-3.5 h-3.5 text-emerald-100" />
+                        <span>حفظ نسخة احتياطية كاملة (Backup) 💾</span>
+                      </button>
+
+                      <label
+                        className="flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold px-3 py-2 rounded-xl border border-stone-300 transition cursor-pointer"
+                        title="استرجاع نسخة محفوظة مسبقاً في أي وقت أو على أي جهاز آخر"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-stone-600" />
+                        <span>استرجاع نسخة (Restore)</span>
+                        <input
+                          type="file"
+                          accept=".json"
+                          onChange={handleRestoreFullBackup}
+                          className="hidden"
+                        />
+                      </label>
+
                       <button
                         onClick={handleExportCurrentToExcel}
                         className="flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold px-3 py-2 rounded-xl border border-stone-300 transition cursor-pointer"
                       >
-                        <Download className="w-3.5 h-3.5 text-stone-600" />
-                        <span>تصدير لإكسيل</span>
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>تصدير إكسيل</span>
                       </button>
 
                       <button

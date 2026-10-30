@@ -29,7 +29,10 @@ const MenuContent: React.FC = () => {
     searchQuery, 
     setSearchQuery,
     settings,
-    openAdminDashboard
+    openAdminDashboard,
+    isLoadingData,
+    dataSourceError,
+    refreshData
   } = useStore();
 
   // Filter products by category & search query
@@ -142,20 +145,59 @@ const MenuContent: React.FC = () => {
       {/* Products Catalog Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
         
-        {/* Active Filter or Search info */}
-        {searchQuery.trim() && (
-          <div className="mb-6 flex items-center justify-between bg-white p-3.5 rounded-2xl border border-stone-200">
-            <div className="text-xs sm:text-sm text-stone-600">
-              نتائج البحث عن: <strong className="text-orange-600 font-black">"{searchQuery}"</strong> ({filteredProducts.length} صنف)
+        {/* Supabase Connection Status Banner (Minimal, non-intrusive) */}
+        {dataSourceError && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-amber-900">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping shrink-0" />
+              <span>{dataSourceError}</span>
             </div>
             <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs font-bold text-stone-400 hover:text-stone-700"
+              onClick={() => refreshData()}
+              className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shrink-0 transition cursor-pointer shadow-2xs active:scale-95"
             >
-              إلغاء البحث
+              إعادة التحقق 🔄
             </button>
           </div>
         )}
+
+        {/* Loading Skeleton State */}
+        {isLoadingData && products.length === 0 ? (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-stone-400 text-xs font-bold animate-pulse">
+              <Snowflake className="w-4 h-4 animate-spin text-orange-500" />
+              <span>جاري تحميل قائمة المنتجات من قاعدة البيانات...</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-stone-200 p-4 space-y-3 animate-pulse">
+                  <div className="w-full h-44 bg-stone-100 rounded-xl" />
+                  <div className="h-4 bg-stone-100 rounded-md w-3/4" />
+                  <div className="h-3 bg-stone-100 rounded-md w-1/2" />
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="h-5 bg-stone-100 rounded-md w-16" />
+                    <div className="h-8 bg-stone-100 rounded-xl w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Active Filter or Search info */}
+            {searchQuery.trim() && (
+              <div className="mb-6 flex items-center justify-between bg-white p-3.5 rounded-2xl border border-stone-200">
+                <div className="text-xs sm:text-sm text-stone-600">
+                  نتائج البحث عن: <strong className="text-orange-600 font-black">"{searchQuery}"</strong> ({filteredProducts.length} صنف)
+                </div>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-xs font-bold text-stone-400 hover:text-stone-700 cursor-pointer"
+                >
+                  إلغاء البحث
+                </button>
+              </div>
+            )}
 
         {/* If no search and "all" category is selected: Lebanese Bakery sectioned layout */}
         {groupedCategories && groupedCategories.length > 0 ? (
@@ -221,6 +263,8 @@ const MenuContent: React.FC = () => {
             </button>
           </div>
         )}
+      </>
+    )}
 
       </main>
 
