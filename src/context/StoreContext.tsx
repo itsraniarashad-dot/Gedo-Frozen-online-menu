@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Product, Category, CartItem, StoreSettings, CustomerDetails, WeightOption } from '../types';
 import { INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_SETTINGS } from '../data/initialData';
