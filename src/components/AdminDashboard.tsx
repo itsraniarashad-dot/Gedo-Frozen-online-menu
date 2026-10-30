@@ -61,20 +61,16 @@ export const AdminDashboard: React.FC = () => {
     importBulkProducts, 
     resetToDefaults,
     isAdminLoggedIn,
-    loginAdmin,
     loginAdminWithSupabase,
     logoutAdmin,
     adminEmail,
     isUsingSupabase
   } = useStore();
 
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState('');
-  const [usePinFallback, setUsePinFallback] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'excel' | 'settings' | 'categories'>('products');
 
   // Category inline edit state
@@ -226,17 +222,6 @@ export const AdminDashboard: React.FC = () => {
       setAuthPassword('');
     } else {
       setAuthErrorMessage(res.error || 'فشل تسجيل الدخول، يرجى التأكد من البريد وكلمة المرور.');
-    }
-  };
-
-  // PIN Login handler fallback
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginAdmin(pinInput)) {
-      setPinError(false);
-      setPinInput('');
-    } else {
-      setPinError(true);
     }
   };
 
@@ -600,102 +585,56 @@ export const AdminDashboard: React.FC = () => {
             <div>
               <h3 className="text-lg font-black text-stone-900">تسجيل دخول صاحب المتجر</h3>
               <p className="text-xs text-stone-500 mt-1">
-                {usePinFallback 
-                  ? 'تسجيل الدخول برمز PIN الطوارئ' 
-                  : 'سجل دخولك بحساب الإدارة المسجل في Supabase'}
+                الدخول محمي بالكامل عبر حساب المدير المسجل في Supabase
               </p>
             </div>
 
-            {!usePinFallback ? (
-              /* Supabase Email/Password Form */
-              <form onSubmit={handleSupabaseLogin} className="space-y-3 text-right">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">البريد الإلكتروني للإدارة</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="admin@gedofrozen.com"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    dir="ltr"
-                    className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
-                  />
-                </div>
+            {/* Supabase Email/Password Form Only */}
+            <form onSubmit={handleSupabaseLogin} className="space-y-3 text-right">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">البريد الإلكتروني للإدارة</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@gedofrozen.com"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  dir="ltr"
+                  className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">كلمة المرور</label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    dir="ltr"
-                    className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
-                  />
-                </div>
-
-                {authErrorMessage && (
-                  <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-bold text-center">
-                    {authErrorMessage}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={authLoading}
-                  className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {authLoading ? (
-                    <span>جاري التحقق من الصلاحيات...</span>
-                  ) : (
-                    <span>دخول لوحة التحكم</span>
-                  )}
-                </button>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setUsePinFallback(true)}
-                    className="text-[11px] text-stone-400 hover:text-orange-600 underline cursor-pointer"
-                  >
-                    أو الدخول برمز PIN السري
-                  </button>
-                </div>
-              </form>
-            ) : (
-              /* PIN Fallback Form */
-              <form onSubmit={handleLogin} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">كلمة المرور</label>
                 <input
                   type="password"
-                  placeholder="رمز المرور (PIN)"
-                  value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value)}
-                  autoFocus
-                  className="w-full text-center tracking-widest text-lg font-mono py-2.5 px-4 bg-stone-100 border border-stone-300 rounded-2xl focus:border-orange-500 focus:bg-white outline-none"
+                  required
+                  placeholder="••••••••"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  dir="ltr"
+                  className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
                 />
-                {pinError && (
-                  <div className="text-xs text-red-600 font-bold">
-                    رمز المرور غير صحيح، حاول مرة أخرى.
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-2xl shadow-md transition cursor-pointer"
-                >
-                  دخول لوحة التحكم
-                </button>
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setUsePinFallback(false)}
-                    className="text-[11px] text-stone-400 hover:text-orange-600 underline cursor-pointer"
-                  >
-                    العودة لتسجيل الدخول بالبريد وكلمة المرور
-                  </button>
+              </div>
+
+              {authErrorMessage && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-bold text-center">
+                  {authErrorMessage}
                 </div>
-              </form>
-            )}
+              )}
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                {authLoading ? (
+                  <span>جاري التحقق من الصلاحيات...</span>
+                ) : (
+                  <span>دخول لوحة التحكم</span>
+                )}
+              </button>
+            </form>
           </div>
         ) : (
           <>
@@ -1371,14 +1310,12 @@ export const AdminDashboard: React.FC = () => {
 
                       <div>
                         <label className="block text-xs font-bold text-stone-700 mb-1">
-                          رمز المرور السري للوحة الإدارة (PIN)
+                          نظام حماية الدخول
                         </label>
-                        <input
-                          type="text"
-                          value={settingsForm.adminPin}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, adminPin: e.target.value })}
-                          className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs sm:text-sm outline-none focus:border-orange-500 font-mono"
-                        />
+                        <div className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600 flex items-center justify-between">
+                          <span className="font-semibold text-emerald-700">محمي بـ Supabase Auth 🔒</span>
+                          <span className="text-[11px] text-stone-400">تم إلغاء نظام الـ PIN</span>
+                        </div>
                       </div>
                     </div>
                   </div>

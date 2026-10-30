@@ -53,8 +53,7 @@ interface StoreContextType {
   calculateDeliveryFee: (deliveryType: 'delivery' | 'pickup') => number;
   calculateTotal: (deliveryType: 'delivery' | 'pickup') => number;
 
-  // Admin actions (PIN fallback & Supabase email/password)
-  loginAdmin: (pin: string) => boolean;
+  // Admin actions (Supabase email/password with admin_users verification only)
   loginAdminWithSupabase: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logoutAdmin: () => Promise<void>;
   updateSettings: (newSettings: Partial<StoreSettings>) => Promise<void>;
@@ -128,13 +127,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState<boolean>(false);
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
   
-  // Admin auth state
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    return sessionStorage.getItem('gedo_admin_auth') === 'true';
-  });
-  const [adminEmail, setAdminEmail] = useState<string | null>(() => {
-    return sessionStorage.getItem('gedo_admin_email') || null;
-  });
+  // Admin auth state (Always driven by Supabase Auth and admin_users verification)
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
 
   // Save cart locally
   useEffect(() => {
@@ -366,16 +361,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Admin PIN fallback
-  const loginAdmin = (pin: string): boolean => {
-    if (pin.trim() === settings.adminPin.trim()) {
-      setIsAdminLoggedIn(true);
-      sessionStorage.setItem('gedo_admin_auth', 'true');
-      return true;
-    }
-    return false;
-  };
-
   const logoutAdmin = async () => {
     if (supabase && isSupabaseConfigured) {
       try {
@@ -408,7 +393,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (newSettings.minOrderAmount !== undefined) payload.min_order_amount = newSettings.minOrderAmount;
         if (newSettings.addressText !== undefined) payload.address_text = newSettings.addressText;
         if (newSettings.announcementText !== undefined) payload.announcement_text = newSettings.announcementText;
-        if (newSettings.adminPin !== undefined) payload.admin_pin = newSettings.adminPin;
         if (newSettings.workingHours !== undefined) payload.working_hours = newSettings.workingHours;
 
         // Upsert into store_settings
@@ -720,7 +704,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         calculateDeliveryFee,
         calculateTotal,
 
-        loginAdmin,
         loginAdminWithSupabase,
         logoutAdmin,
         updateSettings,
