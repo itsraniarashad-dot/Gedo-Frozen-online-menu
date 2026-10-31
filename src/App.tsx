@@ -122,7 +122,9 @@ const MenuContent: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>رسوم التوصيل:</span>
-                  <span className="font-bold text-stone-900">{settings.deliveryFee} ج.م</span>
+                  <span className="font-bold text-stone-900 bg-orange-50 text-orange-700 px-2 py-0.5 rounded-lg border border-orange-200/80 text-[11px]">
+                    تبدأ من ١٠ جنيه (وتزيد بحسب المكان) 🛵
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-orange-800 bg-orange-100/70 px-2.5 py-1.5 rounded-xl font-bold border border-orange-200">
                   <span>نطاق التوصيل:</span>

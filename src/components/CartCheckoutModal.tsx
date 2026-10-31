@@ -639,21 +639,30 @@ export const CartCheckoutModal: React.FC = () => {
                   <span className="font-bold text-stone-900">{subtotal} ج.م</span>
                 </div>
 
-                <div className="flex justify-between text-stone-600">
+                <div className="flex justify-between items-center text-stone-600">
                   <span>خدمة التوصيل (داخل 6 أكتوبر):</span>
                   <span className="font-bold text-stone-900">
                     {deliveryType === 'pickup' ? (
                       <span className="text-stone-500">استلام من الفرع (0 ج.م)</span>
                     ) : (
-                      <span>{currentDeliveryFee} ج.م</span>
+                      <span className="text-orange-700 bg-orange-100/70 border border-orange-200 px-2 py-0.5 rounded-lg text-xs font-black">
+                        تبدأ من ١٠ جنيه (وتزيد بحسب المكان)
+                      </span>
                     )}
                   </span>
                 </div>
 
                 <div className="pt-2 border-t border-stone-200 flex justify-between items-baseline text-base sm:text-lg font-black text-stone-900">
-                  <span>المبلغ الإجمالي للدفع:</span>
-                  <div className="text-orange-600 font-black">
-                    {finalTotal} <span className="text-xs font-bold text-stone-500">ج.م</span>
+                  <div>
+                    <span>المبلغ الإجمالي المبدئي:</span>
+                    {deliveryType === 'delivery' && (
+                      <span className="block text-[11px] font-normal text-stone-500 mt-0.5">
+                        (يُحدد سعر التوصيل النهائي بدقة مع خدمة العملاء حسب العنوان بالتفصيل)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-orange-600 font-black text-left">
+                    {deliveryType === 'pickup' ? subtotal : subtotal + 10} <span className="text-xs font-bold text-stone-500">ج.م {deliveryType === 'delivery' ? '+' : ''}</span>
                   </div>
                 </div>
               </div>

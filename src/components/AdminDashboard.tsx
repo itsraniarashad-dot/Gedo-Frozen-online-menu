@@ -1248,7 +1248,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-stone-700 mb-1">
-                          رسوم التوصيل داخل 6 أكتوبر (ج.م)
+                          رسوم التوصيل المبدئية (تبدأ من ١٠ جنيه وتزيد بحسب المكان)
                         </label>
                         <input
                           type="number"

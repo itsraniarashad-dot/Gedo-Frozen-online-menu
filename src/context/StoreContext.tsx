@@ -649,10 +649,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
 
+    const deliveryFeeText = customerDetails.deliveryType === 'pickup' 
+      ? 'استلام من الفرع (0 ج.م)' 
+      : 'تبدأ من ١٠ جنيه (وتزيد بحسب المكان)';
+
     message += `--------------------------------\n`;
     message += `💰 *قيمة الأصناف:* ${subtotal} ج.م\n`;
-    message += `🛵 *رسوم التوصيل:* ${orderFee} ج.م\n`;
-    message += `⭐ *إجمالي الحساب النهائي:* *${finalTotal} ج.م*\n`;
+    message += `🛵 *رسوم التوصيل:* ${deliveryFeeText}\n`;
+    if (customerDetails.deliveryType === 'pickup') {
+      message += `⭐ *إجمالي الحساب النهائي:* *${subtotal} ج.م*\n`;
+    } else {
+      message += `⭐ *إجمالي المنتجات:* *${subtotal} ج.م* (يُضاف سعر التوصيل النهائي بالتنسيق معكم)\n`;
+    }
     message += `--------------------------------\n`;
     message += `يرجى تأكيد استلام الطلب وتحديد موعد التوصيل، شكراً لكم!`;
 
