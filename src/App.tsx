@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { Header } from './components/Header';
 import { CategoryNav } from './components/CategoryNav';
@@ -7,6 +7,8 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { FloatingCartBar } from './components/FloatingCartBar';
 import { CartCheckoutModal } from './components/CartCheckoutModal';
 import { AdminDashboard } from './components/AdminDashboard';
+import { ResetPasswordModal } from './components/ResetPasswordModal';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { 
   Snowflake, 
   Flame, 
@@ -34,6 +36,43 @@ const MenuContent: React.FC = () => {
     dataSourceError,
     refreshData
   } = useStore();
+
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+
+  // Listen for verified Supabase password recovery event or session
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured) return;
+
+    // Check if URL has an explicit error returned from Supabase
+    const hash = window.location.hash;
+    if (hash.includes('error=')) {
+      setIsResetPasswordOpen(true);
+      return;
+    }
+
+    // Supabase fires PASSWORD_RECOVERY event when user clicks the emailed reset link
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Double check session validity with Supabase
+        if (session?.user) {
+          setIsResetPasswordOpen(true);
+        }
+      }
+    });
+
+    // Also verify if a session was restored from recovery token in the URL
+    if (hash.includes('access_token=') && hash.includes('type=recovery')) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          setIsResetPasswordOpen(true);
+        }
+      });
+    }
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Filter products by category & search query
   const filteredProducts = useMemo(() => {
@@ -277,6 +316,14 @@ const MenuContent: React.FC = () => {
       <ProductDetailModal />
       <CartCheckoutModal />
       <AdminDashboard />
+      <ResetPasswordModal 
+        isOpen={isResetPasswordOpen}
+        onClose={() => setIsResetPasswordOpen(false)}
+        onSuccess={() => {
+          setIsResetPasswordOpen(false);
+          openAdminDashboard();
+        }}
+      />
 
       {/* Footer */}
       <footer className="bg-white border-t border-stone-200 mt-16 pt-10 pb-24 sm:pb-12 text-stone-600 text-xs">

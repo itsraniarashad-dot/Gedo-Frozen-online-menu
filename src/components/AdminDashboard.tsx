@@ -44,6 +44,8 @@ const PRESET_FROZEN_IMAGES = [
   { label: 'مخبوزات وميلفيه', url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80' }
 ];
 
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+
 export const AdminDashboard: React.FC = () => {
   const { 
     isAdminDashboardOpen, 
@@ -71,6 +73,14 @@ export const AdminDashboard: React.FC = () => {
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authErrorMessage, setAuthErrorMessage] = useState('');
+  
+  // Forgot password states
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState('');
+  const [forgotError, setForgotError] = useState('');
+
   const [activeTab, setActiveTab] = useState<'products' | 'excel' | 'settings' | 'categories'>('products');
 
   // Category inline edit state
@@ -222,6 +232,42 @@ export const AdminDashboard: React.FC = () => {
       setAuthPassword('');
     } else {
       setAuthErrorMessage(res.error || 'فشل تسجيل الدخول، يرجى التأكد من البريد وكلمة المرور.');
+    }
+  };
+
+  // Forgot password request handler
+  const handleSendPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotMessage('');
+
+    if (!supabase || !isSupabaseConfigured) {
+      setForgotError('خدمة Supabase غير متصلة.');
+      setForgotLoading(false);
+      return;
+    }
+
+    try {
+      // Always target the official production Vercel domain for password reset
+      const isProduction = window.location.hostname === 'gedo-frozen-online-menu.vercel.app';
+      const redirectUrl = isProduction 
+        ? 'https://gedo-frozen-online-menu.vercel.app' 
+        : window.location.origin;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: redirectUrl
+      });
+
+      if (error) {
+        setForgotError(error.message || 'تعذر إرسال رابط الاستعادة، تأكد من صحة البريد الإلكتروني.');
+      } else {
+        setForgotMessage('تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني! تفقد صندوق الوارد والبريد غير الهام (Spam).');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'حدث خطأ غير متوقع أثناء إرسال الرابط.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -589,8 +635,9 @@ export const AdminDashboard: React.FC = () => {
               </p>
             </div>
 
-            {/* Supabase Email/Password Form Only */}
-            <form onSubmit={handleSupabaseLogin} className="space-y-3 text-right">
+            {!showForgotPassword ? (
+              /* Supabase Email/Password Form Only */
+              <form onSubmit={handleSupabaseLogin} className="space-y-3 text-right">
               <div>
                 <label className="block text-xs font-bold text-stone-700 mb-1">البريد الإلكتروني للإدارة</label>
                 <input
@@ -634,9 +681,79 @@ export const AdminDashboard: React.FC = () => {
                   <span>دخول لوحة التحكم</span>
                 )}
               </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(true);
+                    setForgotError('');
+                    setForgotMessage('');
+                    setForgotEmail(authEmail || '');
+                  }}
+                  className="text-xs text-stone-500 hover:text-orange-600 underline cursor-pointer"
+                >
+                  نسيت كلمة المرور؟
+                </button>
+              </div>
             </form>
-          </div>
-        ) : (
+          ) : (
+            /* Forgot Password Request Form */
+            <form onSubmit={handleSendPasswordReset} className="space-y-3 text-right">
+              <p className="text-xs text-stone-500 text-center leading-relaxed">
+                أدخل بريدك الإلكتروني المسجل في Supabase وسنرسل لك رابطاً لإعادة تعيين كلمة المرور فوراً.
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@gedofrozen.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  dir="ltr"
+                  className="w-full text-xs sm:text-sm py-2.5 px-3 bg-stone-50 border border-stone-300 rounded-xl focus:border-orange-500 focus:bg-white outline-none"
+                />
+              </div>
+
+              {forgotError && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-xl font-bold text-center">
+                  {forgotError}
+                </div>
+              )}
+
+              {forgotMessage && (
+                <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl font-bold text-center leading-relaxed">
+                  {forgotMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={forgotLoading}
+                className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2 text-xs sm:text-sm"
+              >
+                {forgotLoading ? (
+                  <span>جاري إرسال الرابط...</span>
+                ) : (
+                  <span>إرسال رابط إعادة التعيين</span>
+                )}
+              </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-xs text-stone-400 hover:text-stone-700 cursor-pointer"
+                >
+                  العودة لتسجيل الدخول
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      ) : (
           <>
             {/* Navigation Tabs */}
             <div className="flex items-center gap-1 bg-stone-100 p-2 border-b border-stone-200 overflow-x-auto text-xs sm:text-sm font-bold">
